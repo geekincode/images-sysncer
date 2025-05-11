@@ -11,8 +11,6 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-# 工作流程任务（通常含有一个或多个步骤）
 jobs:
   syncimages:
     runs-on: ubuntu-latest
@@ -20,18 +18,19 @@ jobs:
     - name: Checkout Repos
       uses: actions/checkout@v3
       
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2.9.1
+    - name: Install Skopeo  # 新增安装步骤
+      run: sudo apt-get update && sudo apt-get install -y skopeo
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2.2.0
+    - name: Login to Aliyun Registry  # 修正步骤名称
+      uses: docker/login-action@v2
       with:
         registry: registry.cn-hangzhou.aliyuncs.com
-        username: aliyun9903304480
-        password: Boy.17265341828
+        username: ${{ secrets.ALIYUN_USERNAME }}  # 使用Secrets
+        password: ${{ secrets.ALIYUN_PASSWORD }}
         logout: false
         
-    - name: Use Skopeo Tools Sync Image to Docker Hub
+    - name: Sync Image to Aliyun Registry  # 修正步骤名称
       run: |
-        #!/usr/bin/env bash
-        skopeo copy docker://docker.io/starrocks/be-ubuntu:3.3-latest docker://registry.cn-hangzhou.aliyuncs.com/docker_image-ljx/starrocks_be-ubuntu:3.3-latest
+        skopeo copy --dest-creds "${{ secrets.ALIYUN_USERNAME }}:${{ secrets.ALIYUN_PASSWORD }}" \
+          docker://docker.io/starrocks/be-ubuntu:3.3-latest \
+          docker://registry.cn-hangzhou.aliyuncs.com/docker_image-ljx/starrocks_be-ubuntu:3.3-latest
